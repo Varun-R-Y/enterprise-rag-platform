@@ -1,4 +1,5 @@
 import pytest
+from typing import Generator
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -19,7 +20,7 @@ engine = create_engine(
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(name="db_session")
-def db_session_fixture() -> Session:
+def db_session_fixture() -> Generator[Session, None, None]:
     """
     Creates a new database session for a test, with tables created and dropped.
     """
@@ -32,11 +33,11 @@ def db_session_fixture() -> Session:
         Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(name="client")
-def client_fixture(db_session: Session) -> TestClient:
+def client_fixture(db_session: Session) -> Generator[TestClient, None, None]:
     """
     FastAPI test client with database dependency override.
     """
-    def override_get_db():
+    def override_get_db() -> Generator[Session, None, None]:
         try:
             yield db_session
         finally:

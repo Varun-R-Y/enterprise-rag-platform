@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     
     DATABASE_URL: Optional[str] = Field(default=None)
     
+    # Qdrant Configuration
+    QDRANT_URL: Optional[str] = Field(default=None)
+    QDRANT_API_KEY: Optional[str] = Field(default=None)
+    
     # Security / Authentication Configuration
     SECRET_KEY: str = Field(default="placeholder_super_secret_key_for_jwt_signing_change_me_in_production")
     ALGORITHM: str = Field(default="HS256")

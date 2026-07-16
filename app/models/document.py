@@ -58,6 +58,7 @@ class Document(Base):
         onupdate=func.now(),
         nullable=False
     )
+    # TODO: Add indexed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     tenant: Mapped["Tenant"] = relationship(back_populates="documents")

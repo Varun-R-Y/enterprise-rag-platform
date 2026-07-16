@@ -8,3 +8,21 @@ class PageContent(BaseModel):
     page: int
     text: str
 
+
+class Chunk(BaseModel):
+    document_id: UUID4
+    page: int
+    chunk_number: int
+    text: str
+
+
+class EmbeddedChunk(BaseModel):
+    tenant_id: UUID4
+    document_id: UUID4
+    page: int
+    chunk_number: int
+    text: str
+    vector: list[float]
+
+
+
