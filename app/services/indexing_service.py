@@ -69,6 +69,7 @@ class IndexingService:
                     pages=pages
                 )
                 logger.info(f"Generated {len(chunks)} chunks")
+                document.chunk_count = len(chunks)
             except Exception as e:
                 logger.error(f"Chunk generation failed: {e}")
                 raise e

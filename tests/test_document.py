@@ -4,6 +4,7 @@ import pytest
 from pathlib import Path
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from unittest.mock import patch
 
 from app.models.tenant import Tenant
 from app.models.document import Document, DocumentStatus
@@ -49,36 +50,40 @@ def test_upload_pdf_success(client: TestClient, db_session: Session, auth_header
         "file": (file_name, io.BytesIO(pdf_content), "application/pdf")
     }
     
-    response = client.post("/documents/upload", headers=headers, files=files)
-    assert response.status_code == 201
-    
-    resp_json = response.json()
-    assert "document_id" in resp_json
-    assert resp_json["message"] == "Document uploaded successfully"
-    
-    doc_id = resp_json["document_id"]
-    
-    # Verify database record
-    db_doc = db_session.query(Document).filter(Document.id == uuid.UUID(doc_id)).first()
-    assert db_doc is not None
-    assert db_doc.tenant_id == tenant_id
-    assert db_doc.original_filename == "test_document.pdf"
-    assert db_doc.title == "test_document"
-    assert db_doc.mime_type == "application/pdf"
-    assert db_doc.status == DocumentStatus.PENDING
-    assert db_doc.file_size == len(pdf_content)
-    
-    # Verify file saved on disk
-    file_path = Path(db_doc.file_path)
-    assert file_path.exists()
-    assert file_path.read_bytes() == pdf_content
-    
-    # Cleanup disk files
-    if file_path.exists():
-        file_path.unlink()
-        # Clean up tenant folder if empty
-        if file_path.parent.exists() and not any(file_path.parent.iterdir()):
-            file_path.parent.rmdir()
+    with patch("app.api.document.bg_index_document") as mock_bg_task:
+        response = client.post("/documents/upload", headers=headers, files=files)
+        assert response.status_code == 202
+        
+        resp_json = response.json()
+        assert "document_id" in resp_json
+        assert resp_json["message"] == "Document uploaded and indexing started"
+        
+        doc_id = resp_json["document_id"]
+        
+        # Verify database record
+        db_doc = db_session.query(Document).filter(Document.id == uuid.UUID(doc_id)).first()
+        assert db_doc is not None
+        assert db_doc.tenant_id == tenant_id
+        assert db_doc.original_filename == "test_document.pdf"
+        assert db_doc.title == "test_document"
+        assert db_doc.mime_type == "application/pdf"
+        assert db_doc.status == DocumentStatus.PROCESSING
+        assert db_doc.file_size == len(pdf_content)
+        
+        # Verify background task scheduled
+        mock_bg_task.assert_called_once_with(db_doc.id)
+        
+        # Verify file saved on disk
+        file_path = Path(db_doc.file_path)
+        assert file_path.exists()
+        assert file_path.read_bytes() == pdf_content
+        
+        # Cleanup disk files
+        if file_path.exists():
+            file_path.unlink()
+            # Clean up tenant folder if empty
+            if file_path.parent.exists() and not any(file_path.parent.iterdir()):
+                file_path.parent.rmdir()
 
 def test_upload_non_pdf_fails(client: TestClient, auth_headers):
     headers, _ = auth_headers

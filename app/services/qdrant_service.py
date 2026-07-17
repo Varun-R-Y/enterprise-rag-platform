@@ -119,6 +119,52 @@ class QdrantService:
         logger.info(f"Successfully uploaded {len(points)} embeddings to Qdrant.")
         return len(points)
 
+    def delete_document_embeddings(self, tenant_id: uuid.UUID, document_id: uuid.UUID) -> int:
+        """
+        Deletes all vector points associated with the specified document_id under a specific tenant.
+        Returns the number of points successfully deleted.
+        """
+        collection_name = "enterprise_documents"
+        
+        # Build filter to delete only the matching points
+        delete_filter = models.Filter(
+            must=[
+                models.FieldCondition(
+                    key="tenant_id",
+                    match=models.MatchValue(value=str(tenant_id)),
+                ),
+                models.FieldCondition(
+                    key="document_id",
+                    match=models.MatchValue(value=str(document_id)),
+                ),
+            ]
+        )
+        
+        # Count matching points first
+        count_res = self.client.count(
+            collection_name=collection_name,
+            count_filter=delete_filter,
+            exact=True
+        )
+        points_count = count_res.count
+        
+        logger.info(
+            f"Deleting {points_count} embeddings for document '{document_id}' "
+            f"(tenant '{tenant_id}') from collection '{collection_name}'..."
+        )
+        
+        self.client.delete(
+            collection_name=collection_name,
+            points_selector=delete_filter,
+            wait=True
+        )
+        
+        logger.info("Qdrant delete completed successfully.")
+        return points_count
+
+
+
+
 
 if __name__ == "__main__":
     from dotenv import load_dotenv

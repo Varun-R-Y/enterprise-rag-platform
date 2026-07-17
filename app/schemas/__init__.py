@@ -1,6 +1,7 @@
 from app.schemas.auth import UserRegister, UserLogin, Token, UserOut
 from app.schemas.document import DocumentUploadResponse, PageContent, RetrieveResult
 from app.schemas.chat import Source, ChatResponse
+from app.schemas.chat_request import ChatRequest
 
 __all__ = [
     "UserRegister",
@@ -12,4 +13,5 @@ __all__ = [
     "RetrieveResult",
     "Source",
     "ChatResponse",
+    "ChatRequest",
 ]

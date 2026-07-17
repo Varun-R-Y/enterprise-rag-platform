@@ -58,8 +58,8 @@ class OllamaService(BaseLLM):
             logger.error(f"Request to Ollama server timed out after 60.0 seconds: {e}")
             raise RuntimeError("Request to Ollama timed out.") from e
         except httpx.HTTPStatusError as e:
-            logger.error(f"Ollama HTTP error occurred: Status {response.status_code}")
-            raise RuntimeError(f"Ollama server returned HTTP error: {response.status_code}") from e
+            logger.error(f"Ollama HTTP error occurred: Status {e.response.status_code}")
+            raise RuntimeError(f"Ollama server returned HTTP error: {e.response.status_code}") from e
         except httpx.RequestError as e:
             logger.error(f"Error during request communication with Ollama: {e}")
             raise RuntimeError(f"Failed to communicate with Ollama: {e}") from e

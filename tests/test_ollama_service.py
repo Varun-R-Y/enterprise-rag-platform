@@ -114,3 +114,26 @@ async def test_ollama_generate_missing_response_field():
         with pytest.raises(RuntimeError) as exc_info:
             await service.generate("Hello")
         assert "Missing 'response' field" in str(exc_info.value)
+
+
+@pytest.mark.anyio
+async def test_ollama_generate_http_status_error():
+    service = OllamaService()
+
+    with patch("httpx.AsyncClient") as MockClientClass:
+        mock_client = AsyncMock()
+        MockClientClass.return_value.__aenter__.return_value = mock_client
+
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_response.status_code = 500
+        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            message="Internal Server Error",
+            request=MagicMock(spec=httpx.Request),
+            response=mock_response
+        )
+        mock_client.post.return_value = mock_response
+
+        with pytest.raises(RuntimeError) as exc_info:
+            await service.generate("Hello")
+        assert "Ollama server returned HTTP error: 500" in str(exc_info.value)
+

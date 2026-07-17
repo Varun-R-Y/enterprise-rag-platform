@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.init_db import init_db
 from app.api.auth import router as auth_router
 from app.api.document import router as document_router
+from app.api.routes.chat import router as chat_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,6 +24,7 @@ app = FastAPI(
 # Register routers
 app.include_router(auth_router)
 app.include_router(document_router)
+app.include_router(chat_router)
 
 # Set up CORS middleware
 app.add_middleware(

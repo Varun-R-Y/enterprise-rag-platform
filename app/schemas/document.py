@@ -1,4 +1,6 @@
+from datetime import datetime
 from pydantic import BaseModel, UUID4
+from app.models.document import DocumentStatus
 
 class DocumentUploadResponse(BaseModel):
     document_id: UUID4
@@ -34,6 +36,14 @@ class RetrieveResult(BaseModel):
     page: int
     chunk_number: int
     text: str
+
+
+class DocumentSummary(BaseModel):
+    id: UUID4
+    original_filename: str
+    status: DocumentStatus
+    uploaded_at: datetime
+    chunk_count: int
 
 
 
