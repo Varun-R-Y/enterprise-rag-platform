@@ -66,7 +66,13 @@ class QdrantService:
                 distance=models.Distance.COSINE
             )
         )
-        logger.info(f"Collection '{collection_name}' created successfully.")
+        # Create payload index for tenant_id filtering
+        self.client.create_payload_index(
+            collection_name=collection_name,
+            field_name="tenant_id",
+            field_schema=models.PayloadSchemaType.KEYWORD
+        )
+        logger.info(f"Collection '{collection_name}' created successfully and payload index on 'tenant_id' initialized.")
 
     def upload_embeddings(self, chunks: list[EmbeddedChunk], original_filename: str) -> int:
         """

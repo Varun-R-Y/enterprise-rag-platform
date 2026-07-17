@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Qdrant Configuration
     QDRANT_URL: Optional[str] = Field(default=None)
     QDRANT_API_KEY: Optional[str] = Field(default=None)
+
+    # Ollama Configuration
+    OLLAMA_BASE_URL: str = Field(default="http://localhost:11434")
+    OLLAMA_MODEL: str = Field(default="phi3:mini")
     
     # Security / Authentication Configuration
     SECRET_KEY: str = Field(default="placeholder_super_secret_key_for_jwt_signing_change_me_in_production")

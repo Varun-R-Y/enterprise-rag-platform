@@ -66,6 +66,25 @@ class EmbeddingService:
         logger.info(f"Successfully generated {len(embedded_chunks)} embedded chunks.")
         return embedded_chunks
 
+    def embed_query(self, text: str) -> list[float]:
+        """
+        Generates a normalized embedding for a single text query.
+
+        Args:
+            text: The text query string.
+
+        Returns:
+            A list of floats representing the embedding vector.
+        """
+        logger.info(f"Generating embedding for query: '{text[:50]}...'")
+        vector = self.model.encode(
+            text,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+        )
+        logger.info("Successfully generated query embedding.")
+        return vector.tolist()
+
 
 if __name__ == "__main__":
     import uuid

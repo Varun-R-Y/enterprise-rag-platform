@@ -25,4 +25,15 @@ class EmbeddedChunk(BaseModel):
     vector: list[float]
 
 
+class RetrieveResult(BaseModel):
+    score: float
+    tenant_id: UUID4
+    document_id: UUID4
+    title: str
+    original_filename: str
+    page: int
+    chunk_number: int
+    text: str
+
+
 
