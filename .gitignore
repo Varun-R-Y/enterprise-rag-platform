@@ -1,4 +1,4 @@
-# Python
+# Python Cache
 __pycache__/
 *.py[cod]
 *$py.class
@@ -22,24 +22,27 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Virtual Environment
+# Virtual Environments
 .venv/
 venv/
 ENV/
 env/
 
-# Environment
-.env
-.env.*
-!.env.example
+# Environment configurations (always ignore secrets, but commit templates)
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.template
 
-# IDE
+# IDEs and Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -47,7 +50,7 @@ desktop.ini
 # Logs
 *.log
 
-# Testing
+# Testing and Coverage
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -55,16 +58,23 @@ desktop.ini
 .coverage
 .coverage.*
 htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
 
-# Database / Vector Store
+# Database & local sqlite files
 *.db
 *.sqlite3
 chroma/
 .chroma/
 
-# Uploads
-uploads/*
-!uploads/.gitkeep
+# Uploaded assets (keep folders but ignore user content)
+**/uploads/*
+!**/uploads/.gitkeep
 
-# Scratch / Temporary Scripts
+# React Frontend dependencies and builds
+**/node_modules/
+**/dist/
+
+# Scratch & temporary workspace folders
 scratch/

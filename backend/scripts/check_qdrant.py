@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 logging.basicConfig(level=logging.WARNING)
 
 # Ensure app modules can be imported by adding the project root to sys.path
-project_root = Path(__file__).resolve().parent
+project_root = Path(__file__).resolve().parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
@@ -57,17 +57,47 @@ def main():
         
         # Extract vector config details
         vectors_config = info.config.params.vectors
-        if hasattr(vectors_config, 'size'):
-            # Single vector configuration
-            vector_size = vectors_config.size
-            distance = vectors_config.distance
+        
+        def parse_vector_param(param):
+            if param is None:
+                return 'Unknown', 'Unknown'
+            if isinstance(param, dict):
+                return param.get('size', 'Unknown'), param.get('distance', 'Unknown')
+            sz = getattr(param, 'size', None)
+            dst = getattr(param, 'distance', None)
+            if sz is None and dst is None:
+                try:
+                    sz = param.get('size', 'Unknown')
+                    dst = param.get('distance', 'Unknown')
+                except Exception:
+                    pass
+            return sz if sz is not None else 'Unknown', dst if dst is not None else 'Unknown'
+
+        if vectors_config is None:
+            vector_size = 'Unknown'
+            distance = 'Unknown'
         elif isinstance(vectors_config, dict):
-            # Named vectors configuration
-            vector_size = {k: v.size for k, v in vectors_config.items()}
-            distance = {k: v.distance for k, v in vectors_config.items()}
+            vector_size = {}
+            distance = {}
+            for k, v in vectors_config.items():
+                sz, dst = parse_vector_param(v)
+                vector_size[k] = sz
+                distance[k] = dst
+        elif hasattr(vectors_config, 'size') and not hasattr(vectors_config, 'items'):
+            vector_size, distance = parse_vector_param(vectors_config)
         else:
-            vector_size = getattr(vectors_config, 'size', 'Unknown')
-            distance = getattr(vectors_config, 'distance', 'Unknown')
+            if hasattr(vectors_config, 'items'):
+                vector_size = {}
+                distance = {}
+                try:
+                    for k, v in vectors_config.items():
+                        sz, dst = parse_vector_param(v)
+                        vector_size[k] = sz
+                        distance[k] = dst
+                except Exception:
+                    vector_size, distance = parse_vector_param(vectors_config)
+            else:
+                vector_size, distance = parse_vector_param(vectors_config)
 
         print(f"  Vector size: {vector_size}")
         print(f"  Distance metric: {distance}")

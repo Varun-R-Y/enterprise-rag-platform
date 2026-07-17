@@ -7,7 +7,7 @@ from pathlib import Path
 logging.basicConfig(level=logging.WARNING)
 
 # Ensure app modules can be imported by adding the project root to sys.path
-project_root = Path(__file__).resolve().parent
+project_root = Path(__file__).resolve().parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 

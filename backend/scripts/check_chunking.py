@@ -1,5 +1,11 @@
+import sys
 import uuid
 from pathlib import Path
+
+# Ensure app modules can be imported
+project_root = Path(__file__).resolve().parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 from app.services.pdf_service import PDFService
 from app.services.chunking_service import ChunkingService
