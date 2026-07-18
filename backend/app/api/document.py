@@ -1,11 +1,14 @@
 import uuid
 import logging
+from pathlib import Path
 from fastapi import APIRouter, Depends, UploadFile, File, status, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
+from app.models.document import Document
 from app.schemas.document import DocumentUploadResponse, DocumentSummary
 from app.services.document_service import upload_document, list_documents, delete_document, DocumentNotFoundError
 from app.services.indexing_tasks import bg_index_document
@@ -66,7 +69,8 @@ def list_tenant_documents(
             original_filename=doc.original_filename,
             status=doc.status,
             uploaded_at=doc.created_at,
-            chunk_count=doc.chunk_count
+            chunk_count=doc.chunk_count,
+            file_size=doc.file_size
         )
         for doc in documents
     ]
@@ -100,5 +104,44 @@ def delete_tenant_document(
         f"Document ID: {document_id}, "
         f"Number of vectors deleted: {vectors_deleted}, "
         f"Deletion completed"
+    )
+
+
+@router.get(
+    "/{document_id}/download",
+    summary="Download a document",
+    description="Streams the original PDF document file with proper authorization."
+)
+def download_tenant_document(
+    document_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> FileResponse:
+    """
+    Endpoint to download/stream a PDF document.
+    """
+    # 1. Look up the document in the database
+    document = db.query(Document).filter(Document.id == document_id).first()
+    
+    # 2. Check if document exists and matches tenant
+    if not document or document.tenant_id != current_user.tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found."
+        )
+        
+    # 3. Check if local file exists
+    file_path = Path(document.file_path)
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document file not found on server."
+        )
+        
+    # 4. Stream file response
+    return FileResponse(
+        path=file_path,
+        media_type="application/pdf",
+        filename=document.original_filename
     )
 

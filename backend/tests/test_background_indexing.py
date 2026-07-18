@@ -35,6 +35,7 @@ def auth_headers(client: TestClient, db_session: Session):
     login_response = client.post("/auth/login", data=login_data)
     token = login_response.json()["access_token"]
     
+    db_session.rollback()
     return {"Authorization": f"Bearer {token}"}, tenant_id
 
 

@@ -34,6 +34,7 @@ def create_tenant_and_user(client: TestClient, db_session: Session):
         login_response = client.post("/auth/login", data=login_data)
         token = login_response.json()["access_token"]
         
+        db_session.rollback()
         return {"Authorization": f"Bearer {token}"}, tenant_id
     return _create
 
@@ -41,6 +42,7 @@ def create_tenant_and_user(client: TestClient, db_session: Session):
 def test_delete_document_success(client: TestClient, db_session: Session, create_tenant_and_user):
     headers, tenant_id = create_tenant_and_user("user_del@example.com", "tenant-del")
     user = db_session.query(User).filter(User.email == "user_del@example.com").first()
+    assert user is not None
 
     doc = Document(
         id=uuid.uuid4(),
@@ -92,6 +94,7 @@ def test_delete_document_tenant_isolation(client: TestClient, db_session: Sessio
     headers_b, tenant_b_id = create_tenant_and_user("user_b@example.com", "tenant-b")
 
     user_b = db_session.query(User).filter(User.email == "user_b@example.com").first()
+    assert user_b is not None
 
     doc_b = Document(
         id=uuid.uuid4(),
@@ -140,6 +143,7 @@ def test_delete_document_missing(client: TestClient, create_tenant_and_user):
 def test_delete_document_qdrant_failure(client: TestClient, db_session: Session, create_tenant_and_user):
     headers, tenant_id = create_tenant_and_user("user_fail@example.com", "tenant-fail")
     user = db_session.query(User).filter(User.email == "user_fail@example.com").first()
+    assert user is not None
 
     doc = Document(
         id=uuid.uuid4(),
@@ -181,6 +185,7 @@ def test_delete_document_qdrant_failure(client: TestClient, db_session: Session,
 def test_delete_document_missing_local_file(client: TestClient, db_session: Session, create_tenant_and_user):
     headers, tenant_id = create_tenant_and_user("user_missing_file@example.com", "tenant-missing-file")
     user = db_session.query(User).filter(User.email == "user_missing_file@example.com").first()
+    assert user is not None
 
     doc = Document(
         id=uuid.uuid4(),

@@ -38,10 +38,11 @@ def client_fixture(db_session: Session) -> Generator[TestClient, None, None]:
     FastAPI test client with database dependency override.
     """
     def override_get_db() -> Generator[Session, None, None]:
+        db = TestingSessionLocal()
         try:
-            yield db_session
+            yield db
         finally:
-            pass
+            db.close()
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:

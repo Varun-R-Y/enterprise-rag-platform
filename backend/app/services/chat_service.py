@@ -97,6 +97,7 @@ class ChatService:
         sources = [
             Source(
                 document=chunk.original_filename,
+                document_id=chunk.document_id,
                 page=chunk.page,
                 score=chunk.score,
             )

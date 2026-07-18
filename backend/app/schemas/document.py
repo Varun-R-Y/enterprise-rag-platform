@@ -44,6 +44,7 @@ class DocumentSummary(BaseModel):
     status: DocumentStatus
     uploaded_at: datetime
     chunk_count: int
+    file_size: int
 
 
 

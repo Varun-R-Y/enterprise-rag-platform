@@ -36,6 +36,7 @@ def auth_headers(client: TestClient, db_session: Session):
     login_response = client.post("/auth/login", data=login_data)
     token = login_response.json()["access_token"]
     
+    db_session.rollback()
     return {"Authorization": f"Bearer {token}"}, tenant_id
 
 
@@ -47,7 +48,12 @@ def test_chat_api_success(client: TestClient, auth_headers):
     expected_response = ChatResponse(
         answer="Employees receive 12 casual leave days annually.",
         sources=[
-            Source(document="NovaTech_Employee_Handbook_v1.pdf", page=1, score=0.75)
+            Source(
+                document="NovaTech_Employee_Handbook_v1.pdf",
+                document_id=uuid.uuid4(),
+                page=1,
+                score=0.75
+            )
         ]
     )
     mock_chat_service.chat = AsyncMock(return_value=expected_response)

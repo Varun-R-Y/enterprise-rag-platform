@@ -1,11 +1,14 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
+from app.database.session import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.schemas.chat_request import ChatRequest
 from app.schemas.chat import ChatResponse
 from app.services.chat_service import ChatService
+from app.services import conversation_service
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,7 @@ def get_chat_service() -> ChatService:
 )
 async def chat_endpoint(
     request: ChatRequest,
+    db: Session = Depends(get_db),
     chat_service: ChatService = Depends(get_chat_service),
     current_user: User = Depends(get_current_user),
 ) -> ChatResponse:
@@ -40,6 +44,20 @@ async def chat_endpoint(
     logger.info("Incoming chat request.")
     logger.info(f"Authenticated user ID: {current_user.id}")
     logger.info(f"Tenant ID: {current_user.tenant_id}")
+
+    # Validate conversation_id if present
+    if request.conversation_id:
+        conv = conversation_service.get_conversation(
+            db=db,
+            tenant_id=current_user.tenant_id,
+            user_id=current_user.id,
+            conversation_id=request.conversation_id
+        )
+        if not conv:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found."
+            )
 
     try:
         # Validate question empty/whitespace and other validation errors
@@ -54,6 +72,35 @@ async def chat_endpoint(
             top_k=request.top_k,
             score_threshold=request.score_threshold,
         )
+
+        # Save messages to database if conversation exists
+        if request.conversation_id:
+            # 1. Add User message
+            conversation_service.add_message(
+                db=db,
+                conversation_id=request.conversation_id,
+                role="user",
+                content=request.question
+            )
+            # 2. Add Assistant message (and map sources to JSON structure)
+            citations_list = [
+                {
+                    "document": src.document,
+                    "document_id": str(src.document_id),
+                    "page": src.page,
+                    "score": src.score
+                }
+                for src in response.sources
+            ] if response.sources else []
+            
+            conversation_service.add_message(
+                db=db,
+                conversation_id=request.conversation_id,
+                role="assistant",
+                content=response.answer,
+                citations=citations_list
+            )
+
         logger.info("Chat execution completed.")
         return response
     except ValueError as e:
