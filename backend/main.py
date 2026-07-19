@@ -8,11 +8,15 @@ from app.api.auth import router as auth_router
 from app.api.document import router as document_router
 from app.api.routes.chat import router as chat_router
 from app.api.conversation import router as conversation_router
+from app.api.routes.user import router as user_router
+from app.api.routes.tenant import router as tenant_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize the database tables on application startup
-    init_db()
+    import sys
+    if "pytest" not in sys.modules:
+        # Initialize the database tables on application startup
+        init_db()
     yield
 
 app = FastAPI(
@@ -27,6 +31,8 @@ app.include_router(auth_router)
 app.include_router(document_router)
 app.include_router(chat_router)
 app.include_router(conversation_router)
+app.include_router(user_router)
+app.include_router(tenant_router)
 
 # Set up CORS middleware
 app.add_middleware(

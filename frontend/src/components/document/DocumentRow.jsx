@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MoreVertical, Trash2, Eye, Download, RefreshCw, AlertTriangle } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 
-export default function DocumentRow({ document: doc, onDeleteClick, onRetryClick }) {
+export default function DocumentRow({ document: doc, onDeleteClick, onRetryClick, isAdmin }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -85,14 +85,15 @@ export default function DocumentRow({ document: doc, onDeleteClick, onRetryClick
 
       {/* Actions */}
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative">
-        <div ref={menuRef} className="inline-block text-left">
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition cursor-pointer"
-            aria-label="Actions menu"
-          >
-            <MoreVertical size={18} />
-          </button>
+        {isAdmin && (
+          <div ref={menuRef} className="inline-block text-left">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition cursor-pointer"
+              aria-label="Actions menu"
+            >
+              <MoreVertical size={18} />
+            </button>
 
           {menuOpen && (
             <div className="absolute right-0 mt-1 w-48 rounded-lg bg-white shadow-lg border border-slate-200 py-1 z-10 animate-in fade-in slide-in-from-top-1 duration-100">
@@ -137,7 +138,8 @@ export default function DocumentRow({ document: doc, onDeleteClick, onRetryClick
               </button>
             </div>
           )}
-        </div>
+          </div>
+        )}
       </td>
     </tr>
   );

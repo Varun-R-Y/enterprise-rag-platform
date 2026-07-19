@@ -4,16 +4,27 @@ from app.schemas.document import RetrieveResult
 class PromptBuilder:
     """
     Service to build well-structured prompts for the local Ollama Phi-3 Mini model
-    using retrieved document chunks and the user's question.
+    using retrieved document chunks, conversation history, and the user's question.
     """
 
-    def build_prompt(self, question: str, context: list[RetrieveResult]) -> str:
+    MAX_HISTORY_TURNS = 5  # Cap history to last N exchanges to avoid token overflow
+
+    def build_prompt(
+        self,
+        question: str,
+        context: list[RetrieveResult],
+        conversation_history: list[dict] | None = None,
+    ) -> str:
         """
-        Converts the user's question and context list into a single formatted prompt.
+        Converts the user's question, context list, and conversation history
+        into a single formatted prompt.
 
         Args:
             question: The user's question.
             context: List of RetrieveResult objects from semantic search.
+            conversation_history: Optional list of {"role": str, "content": str} dicts
+                                  representing prior conversation turns. Must be
+                                  independent of any ORM models.
 
         Returns:
             The structured prompt string.
@@ -29,8 +40,21 @@ class PromptBuilder:
             "   Reply exactly:\n\n"
             '   "I could not find that information in the provided documents."\n\n'
             "4. Keep answers concise and professional.\n"
-            "5. At the end of the answer, include a Sources section listing every document and page used."
+            "5. At the end of the answer, include a Sources section listing every document and page used.\n"
+            "6. Use conversation history for continuity but always ground answers in the provided context."
         )
+
+        # Build conversation history section
+        history_str = ""
+        if conversation_history:
+            # Take only the last N turns to avoid token overflow
+            trimmed = conversation_history[-(self.MAX_HISTORY_TURNS * 2):]
+            history_parts = []
+            for turn in trimmed:
+                role = turn.get("role", "user").capitalize()
+                content = turn.get("content", "")
+                history_parts.append(f"{role}: {content}")
+            history_str = "\n\n".join(history_parts)
 
         context_parts = []
         for item in context:
@@ -46,8 +70,16 @@ class PromptBuilder:
         context_str = separator.join(context_parts)
 
         # Build the final prompt
-        prompt = (
-            f"{system_instructions}\n\n"
+        prompt = f"{system_instructions}\n\n"
+
+        if history_str:
+            prompt += (
+                "========================================\n\n"
+                "Conversation History\n\n"
+                f"{history_str}\n\n"
+            )
+
+        prompt += (
             "========================================\n\n"
             "Context\n\n"
             f"{context_str}\n\n"
@@ -58,3 +90,4 @@ class PromptBuilder:
             "Answer:\n"
         )
         return prompt
+

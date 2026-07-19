@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.api.deps import get_current_user
+from app.api.deps import require_active_tenant_user
 from app.models.user import User
 from app.schemas.conversation import ConversationCreate, ConversationUpdate, ConversationSummary, MessageOut
 from app.services import conversation_service
@@ -15,7 +15,7 @@ def get_conversations(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_active_tenant_user)
 ) -> list[ConversationSummary]:
     """
     List tenant conversations for the authenticated user, paginated.
@@ -46,7 +46,7 @@ def get_conversations(
 def create_conversation(
     payload: ConversationCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_active_tenant_user)
 ) -> ConversationSummary:
     """
     Create a new conversation session.
@@ -69,7 +69,7 @@ def create_conversation(
 def get_conversation_metadata(
     conversation_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_active_tenant_user)
 ) -> ConversationSummary:
     """
     Get conversation metadata.
@@ -99,7 +99,7 @@ def rename_conversation(
     conversation_id: uuid.UUID,
     payload: ConversationUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_active_tenant_user)
 ) -> ConversationSummary:
     """
     Rename/Update a conversation title.
@@ -129,7 +129,7 @@ def rename_conversation(
 def delete_conversation(
     conversation_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_active_tenant_user)
 ) -> None:
     """
     Delete a conversation and all its messages.
@@ -150,7 +150,7 @@ def delete_conversation(
 def get_conversation_messages(
     conversation_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_active_tenant_user)
 ) -> list[MessageOut]:
     """
     Get messages for a conversation, sorted ASC by creation date.

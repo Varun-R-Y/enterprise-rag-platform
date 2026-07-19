@@ -19,13 +19,20 @@ def create_tenant_and_user(client: TestClient, db_session: Session):
         db_session.add(tenant)
         db_session.commit()
 
-        user_data = {
-            "email": email,
-            "password": "strongpassword123",
-            "full_name": f"User {email}",
-            "tenant_id": str(tenant_id)
-        }
-        client.post("/auth/register", json=user_data)
+        from app.models.user import User, UserRole
+        from app.core.security import get_password_hash
+        
+        user = User(
+            email=email,
+            hashed_password=get_password_hash("strongpassword123"),
+            full_name=f"User {email}",
+            tenant_id=tenant_id,
+            role=UserRole.ADMIN,
+            is_active=True
+        )
+        db_session.add(user)
+        db_session.commit()
+        db_session.refresh(user)
 
         login_data = {
             "username": email,
@@ -225,3 +232,57 @@ def test_delete_document_missing_local_file(client: TestClient, db_session: Sess
         # Document is still deleted from DB
         deleted_doc = db_session.query(Document).filter(Document.id == doc.id).first()
         assert deleted_doc is None
+
+
+def test_delete_document_forbidden_for_employee(client: TestClient, db_session: Session):
+    # 1. Create a dummy tenant
+    tenant_id = uuid.uuid4()
+    tenant = Tenant(id=tenant_id, name="Test Tenant", slug="test-tenant")
+    db_session.add(tenant)
+    db_session.commit()
+
+    from app.models.user import User, UserRole
+    from app.core.security import get_password_hash
+    
+    # 2. Directly create an EMPLOYEE user
+    user = User(
+        email="emp_del@example.com",
+        hashed_password=get_password_hash("strongpassword123"),
+        full_name="Jane Employee",
+        tenant_id=tenant_id,
+        role=UserRole.EMPLOYEE,
+        is_active=True
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    # 3. Log in to get token
+    login_data = {
+        "username": "emp_del@example.com",
+        "password": "strongpassword123"
+    }
+    login_response = client.post("/auth/login", data=login_data)
+    token = login_response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 4. Create document to delete
+    doc = Document(
+        id=uuid.uuid4(),
+        tenant_id=tenant_id,
+        uploaded_by=user.id,
+        title="Test Delete Blocked",
+        original_filename="original_test.pdf",
+        stored_filename="stored_test.pdf",
+        file_path="uploads/stored_test.pdf",
+        file_size=100,
+        mime_type="application/pdf",
+        status=DocumentStatus.COMPLETED,
+        chunk_count=2
+    )
+    db_session.add(doc)
+    db_session.commit()
+
+    # 5. Attempt delete
+    response = client.delete(f"/documents/{doc.id}", headers=headers)
+    assert response.status_code == 403

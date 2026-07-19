@@ -23,6 +23,10 @@ class Tenant(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    timezone: Mapped[str] = mapped_column(String(50), default="UTC", nullable=False)
     
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 

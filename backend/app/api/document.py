@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_admin, require_active_tenant_user
 from app.models.user import User
 from app.models.document import Document
 from app.schemas.document import DocumentUploadResponse, DocumentSummary
@@ -22,13 +22,13 @@ router = APIRouter(prefix="/documents", tags=["documents"])
     response_model=DocumentUploadResponse,
     status_code=status.HTTP_202_ACCEPTED,
     summary="Upload a PDF document",
-    description="Accepts only PDF files, saves them under tenant directory and stores metadata."
+    description="Accepts only PDF files, saves them under tenant directory and stores metadata. Admin only."
 )
 def upload(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_admin)
 ) -> DocumentUploadResponse:
     """
     Endpoint to upload PDF documents. Thin controller containing no business logic.
@@ -50,7 +50,7 @@ def upload(
 )
 def list_tenant_documents(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_active_tenant_user)
 ) -> list[DocumentSummary]:
     """
     Endpoint to list PDF documents for the user's tenant.
@@ -80,12 +80,12 @@ def list_tenant_documents(
     "/{document_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a document",
-    description="Deletes a document and its associated vectors and file securely."
+    description="Deletes a document and its associated vectors and file securely. Admin only."
 )
 def delete_tenant_document(
     document_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_admin)
 ) -> None:
     """
     Endpoint to delete a document and its associated vectors and file.
@@ -115,7 +115,7 @@ def delete_tenant_document(
 def download_tenant_document(
     document_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_active_tenant_user)
 ) -> FileResponse:
     """
     Endpoint to download/stream a PDF document.

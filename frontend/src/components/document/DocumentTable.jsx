@@ -4,7 +4,7 @@ import DocumentRow from './DocumentRow';
 import StatusBadge from './StatusBadge';
 import Card from '../ui/Card';
 
-export default function DocumentTable({ documents, searchTerm, sortBy, onDeleteClick, onRetryClick }) {
+export default function DocumentTable({ documents, searchTerm, sortBy, onDeleteClick, onRetryClick, isAdmin }) {
   const [activeMenuId, setActiveMenuId] = useState(null);
   const menuRef = useRef(null);
 
@@ -93,6 +93,7 @@ export default function DocumentTable({ documents, searchTerm, sortBy, onDeleteC
                 document={doc}
                 onDeleteClick={onDeleteClick}
                 onRetryClick={onRetryClick}
+                isAdmin={isAdmin}
               />
             ))}
           </tbody>
@@ -118,55 +119,57 @@ export default function DocumentTable({ documents, searchTerm, sortBy, onDeleteC
                 </div>
 
                 {/* Mobile Actions Button */}
-                <div className="absolute right-3 top-3">
-                  <button
-                    onClick={() => setActiveMenuId(isMenuOpen ? null : doc.id)}
-                    className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition cursor-pointer"
-                    aria-label="Actions menu"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
-
-                  {isMenuOpen && (
-                    <div
-                      ref={menuRef}
-                      className="absolute right-0 mt-1 w-44 rounded-lg bg-white shadow-lg border border-slate-200 py-1 z-20"
+                {isAdmin && (
+                  <div className="absolute right-3 top-3">
+                    <button
+                      onClick={() => setActiveMenuId(isMenuOpen ? null : doc.id)}
+                      className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition cursor-pointer"
+                      aria-label="Actions menu"
                     >
-                      <button
-                        disabled
-                        className="w-full text-left px-3 py-1.5 text-xs text-slate-400 flex items-center gap-2 cursor-not-allowed hover:bg-slate-50/50"
+                      <MoreVertical size={16} />
+                    </button>
+
+                    {isMenuOpen && (
+                      <div
+                        ref={menuRef}
+                        className="absolute right-0 mt-1 w-44 rounded-lg bg-white shadow-lg border border-slate-200 py-1 z-20"
                       >
-                        <Eye size={12} />
-                        View Details
-                      </button>
-                      <button
-                        disabled
-                        className="w-full text-left px-3 py-1.5 text-xs text-slate-400 flex items-center gap-2 cursor-not-allowed hover:bg-slate-50/50"
-                      >
-                        <Download size={12} />
-                        Download Original
-                      </button>
-                      <button
-                        disabled
-                        className="w-full text-left px-3 py-1.5 text-xs text-slate-400 flex items-center gap-2 cursor-not-allowed hover:bg-slate-50/50"
-                      >
-                        <RefreshCw size={12} />
-                        Reindex
-                      </button>
-                      <hr className="border-slate-100 my-1" />
-                      <button
-                        onClick={() => {
-                          setActiveMenuId(null);
-                          onDeleteClick(doc);
-                        }}
-                        className="w-full text-left px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer transition font-medium"
-                      >
-                        <Trash2 size={12} />
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
+                        <button
+                          disabled
+                          className="w-full text-left px-3 py-1.5 text-xs text-slate-400 flex items-center gap-2 cursor-not-allowed hover:bg-slate-50/50"
+                        >
+                          <Eye size={12} />
+                          View Details
+                        </button>
+                        <button
+                          disabled
+                          className="w-full text-left px-3 py-1.5 text-xs text-slate-400 flex items-center gap-2 cursor-not-allowed hover:bg-slate-50/50"
+                        >
+                          <Download size={12} />
+                          Download Original
+                        </button>
+                        <button
+                          disabled
+                          className="w-full text-left px-3 py-1.5 text-xs text-slate-400 flex items-center gap-2 cursor-not-allowed hover:bg-slate-50/50"
+                        >
+                          <RefreshCw size={12} />
+                          Reindex
+                        </button>
+                        <hr className="border-slate-100 my-1" />
+                        <button
+                          onClick={() => {
+                            setActiveMenuId(null);
+                            onDeleteClick(doc);
+                          }}
+                          className="w-full text-left px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer transition font-medium"
+                        >
+                          <Trash2 size={12} />
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Status & Date block for mobile */}

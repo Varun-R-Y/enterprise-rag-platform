@@ -6,10 +6,12 @@ import AppLayout from '../layouts/AppLayout';
 // Pages
 import Landing from '../pages/Landing/Landing';
 import Login from '../pages/Login/Login';
-import Register from '../pages/Register/Register';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import Documents from '../pages/Documents/Documents';
 import Chat from '../pages/Chat/Chat';
+import UserManagement from '../pages/UserManagement/UserManagement';
+import SuperAdminDashboard from '../pages/SuperAdmin/SuperAdminDashboard';
+import CompanySettings from '../pages/CompanySettings/CompanySettings';
 import NotFound from '../pages/NotFound/NotFound';
 
 export default function AppRoutes() {
@@ -21,7 +23,6 @@ export default function AppRoutes() {
       {/* Public Routes for guest users only (redirects to dashboard if already logged in) */}
       <Route element={<AnonymousRoute />}>
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
       </Route>
 
       {/* Protected Routes inside AppLayout */}
@@ -30,6 +31,9 @@ export default function AppRoutes() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/chat" element={<Chat />} />
+          <Route path="/users" element={<UserManagement />} />
+          <Route path="/super-admin" element={<SuperAdminDashboard />} />
+          <Route path="/settings" element={<CompanySettings />} />
         </Route>
       </Route>
 

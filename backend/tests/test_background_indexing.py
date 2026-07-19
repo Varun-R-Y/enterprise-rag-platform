@@ -20,13 +20,21 @@ def auth_headers(client: TestClient, db_session: Session):
     db_session.add(tenant)
     db_session.commit()
 
-    user_data = {
-        "email": "bg_user@example.com",
-        "password": "strongpassword123",
-        "full_name": "BG User",
-        "tenant_id": str(tenant_id)
-    }
-    client.post("/auth/register", json=user_data)
+    from app.models.user import User, UserRole
+    from app.core.security import get_password_hash
+    
+    # Directly create user in database as admin to allow upload trigger
+    user = User(
+        email="bg_user@example.com",
+        hashed_password=get_password_hash("strongpassword123"),
+        full_name="BG User",
+        tenant_id=tenant_id,
+        role=UserRole.ADMIN,
+        is_active=True
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
 
     login_data = {
         "username": "bg_user@example.com",

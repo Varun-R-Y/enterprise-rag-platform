@@ -11,16 +11,32 @@ class EmbeddingService:
     Service to generate sentence embeddings for document chunks.
     Uses SentenceTransformers with BAAI/bge-small-en-v1.5.
     Runs on CPU by default.
+
+    The model is loaded once as a class-level singleton and shared
+    across all instances to avoid reloading on every request.
     """
 
+    _model: SentenceTransformer | None = None
+    _model_name: str = "BAAI/bge-small-en-v1.5"
+
+    @classmethod
+    def _get_model(cls) -> SentenceTransformer:
+        """Lazy-load the model once and cache it at the class level."""
+        if cls._model is None:
+            logger.info(f"Loading embedding model: {cls._model_name} (singleton init)")
+            cls._model = SentenceTransformer(cls._model_name)
+            logger.info("Embedding model loaded successfully.")
+        return cls._model
+
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5"):
-        logger.info(f"Loading embedding model: {model_name}")
-        # Initialize model once and load onto CPU
-        self.model = SentenceTransformer(model_name)
-        logger.info(f"Embedding model loaded successfully.")
+        # Update class-level model name if a custom one is provided
+        if model_name != self.__class__._model_name and self.__class__._model is not None:
+            logger.warning(f"Model name changed to {model_name}, but singleton already loaded. Ignoring.")
+        self.__class__._model_name = model_name
+        self.model = self._get_model()
 
     def embed_chunks(
-        self, tenant_id: UUID4, chunks: list[Chunk], batch_size: int = 32
+        self, tenant_id: UUID4, chunks: list[Chunk], uploaded_by: UUID4 | None = None, batch_size: int = 32
     ) -> list[EmbeddedChunk]:
         """
         Generates normalized embeddings for a list of Chunks in batches.
@@ -29,6 +45,7 @@ class EmbeddingService:
         Args:
             tenant_id: The UUID of the tenant.
             chunks: List of Chunk models to embed.
+            uploaded_by: Optional UUID of the user who uploaded the document.
             batch_size: Size of batches for model encoding.
 
         Returns:
@@ -60,6 +77,7 @@ class EmbeddingService:
                 chunk_number=chunk.chunk_number,
                 text=chunk.text,
                 vector=vector.tolist(), # Convert numpy array to list[float]
+                uploaded_by=uploaded_by,
             )
             embedded_chunks.append(embedded_chunk)
 

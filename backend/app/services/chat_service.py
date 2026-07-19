@@ -39,6 +39,7 @@ class ChatService:
         question: str,
         top_k: int = 5,
         score_threshold: float | None = None,
+        conversation_history: list[dict] | None = None,
     ) -> ChatResponse:
         """
         Processes a user's question, retrieves context documents, constructs the prompt,
@@ -49,6 +50,7 @@ class ChatService:
             question: The user's question string.
             top_k: Maximum number of semantic chunks to retrieve.
             score_threshold: Optional similarity threshold for retrieval.
+            conversation_history: Optional list of {"role": str, "content": str} dicts.
 
         Returns:
             A ChatResponse containing the answer and citation sources.
@@ -81,8 +83,8 @@ class ChatService:
                 sources=[],
             )
 
-        # Step 4: Construct prompt
-        prompt = self.prompt_builder.build_prompt(question, chunks)
+        # Step 4: Construct prompt with conversation history
+        prompt = self.prompt_builder.build_prompt(question, chunks, conversation_history)
         logger.info(f"Prompt generated. Length: {len(prompt)} characters.")
 
         # Step 5: Execute LLM generation

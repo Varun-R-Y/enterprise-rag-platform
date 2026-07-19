@@ -232,13 +232,15 @@ export default function Dashboard() {
                 <p className="text-xs text-slate-400 max-w-xs mx-auto">
                   Upload PDF files to start generating vector chunks for retrieval-grounded AI search.
                 </p>
-                <Button 
-                  onClick={() => navigate('/documents')} 
-                  variant="primary" 
-                  className="text-xs px-4 py-2 cursor-pointer font-semibold"
-                >
-                  Upload PDF
-                </Button>
+                {currentUser?.role === 'ADMIN' && (
+                  <Button 
+                    onClick={() => navigate('/documents')} 
+                    variant="primary" 
+                    className="text-xs px-4 py-2 cursor-pointer font-semibold"
+                  >
+                    Upload PDF
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="divide-y divide-slate-100">

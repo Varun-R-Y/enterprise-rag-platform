@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.models.document import Document, DocumentStatus
@@ -78,7 +79,8 @@ class IndexingService:
             try:
                 embedded_chunks = self.embedding_service.embed_chunks(
                     tenant_id=document.tenant_id,
-                    chunks=chunks
+                    chunks=chunks,
+                    uploaded_by=document.uploaded_by
                 )
                 logger.info(f"Generated {len(embedded_chunks)} embeddings")
             except Exception as e:
@@ -105,10 +107,7 @@ class IndexingService:
             # Stage E: Complete transition
             try:
                 document.status = DocumentStatus.COMPLETED
-                
-                # TODO: Set indexed_at timestamp once column is added in migration
-                # from datetime import datetime
-                # document.indexed_at = datetime.utcnow()
+                document.indexed_at = datetime.now(timezone.utc)
 
                 db.add(document)
                 db.commit()

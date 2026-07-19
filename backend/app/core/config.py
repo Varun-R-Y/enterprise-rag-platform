@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str = Field(default="placeholder_super_secret_key_for_jwt_signing_change_me_in_production")
     ALGORITHM: str = Field(default="HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
+    DEFAULT_ADMIN_EMAIL: str = Field(default="admin@enterprise.com")
+    DEFAULT_ADMIN_PASSWORD: str = Field(default="admin123")
+    DEFAULT_SUPER_ADMIN_EMAIL: Optional[str] = Field(default=None)
+    DEFAULT_SUPER_ADMIN_PASSWORD: Optional[str] = Field(default=None)
 
     @model_validator(mode="after")
     def assemble_db_connection(self) -> "Settings":
@@ -45,6 +49,14 @@ class Settings(BaseSettings):
                 f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
                 f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
+        
+        import sys
+        if "pytest" not in sys.modules:
+            if not self.DEFAULT_SUPER_ADMIN_EMAIL or not self.DEFAULT_SUPER_ADMIN_PASSWORD:
+                raise RuntimeError(
+                    "Mandatory environment variables DEFAULT_SUPER_ADMIN_EMAIL and "
+                    "DEFAULT_SUPER_ADMIN_PASSWORD must be configured."
+                )
         return self
 
 @lru_cache

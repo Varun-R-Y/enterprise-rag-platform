@@ -68,7 +68,8 @@ async def test_chat_service_success():
     )
     mock_prompt_builder.build_prompt.assert_called_once_with(
         question,
-        mock_chunks
+        mock_chunks,
+        None
     )
     mock_llm.generate.assert_called_once_with("Formatted Prompt")
 

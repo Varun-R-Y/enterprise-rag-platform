@@ -21,13 +21,21 @@ def auth_headers(client: TestClient, db_session: Session):
     db_session.add(tenant)
     db_session.commit()
 
-    user_data = {
-        "email": "chat_user@example.com",
-        "password": "strongpassword123",
-        "full_name": "Chat User",
-        "tenant_id": str(tenant_id)
-    }
-    client.post("/auth/register", json=user_data)
+    from app.models.user import User, UserRole
+    from app.core.security import get_password_hash
+    
+    # Directly create employee in database
+    user = User(
+        email="chat_user@example.com",
+        hashed_password=get_password_hash("strongpassword123"),
+        full_name="Chat User",
+        tenant_id=tenant_id,
+        role=UserRole.EMPLOYEE,
+        is_active=True
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
 
     login_data = {
         "username": "chat_user@example.com",
@@ -84,7 +92,8 @@ def test_chat_api_success(client: TestClient, auth_headers):
             tenant_id=tenant_id,
             question="How many casual leave days do employees receive?",
             top_k=3,
-            score_threshold=0.5
+            score_threshold=0.5,
+            conversation_history=None
         )
     finally:
         # Cleanup dependency overrides

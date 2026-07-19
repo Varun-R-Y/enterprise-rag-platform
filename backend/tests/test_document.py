@@ -20,14 +20,21 @@ def auth_headers(client: TestClient, db_session: Session):
     db_session.add(tenant)
     db_session.commit()
 
-    # 2. Register user
-    user_data = {
-        "email": "user@example.com",
-        "password": "strongpassword123",
-        "full_name": "John Doe",
-        "tenant_id": str(tenant_id)
-    }
-    client.post("/auth/register", json=user_data)
+    from app.models.user import User, UserRole
+    from app.core.security import get_password_hash
+    
+    # 2. Directly create user in database
+    user = User(
+        email="user@example.com",
+        hashed_password=get_password_hash("strongpassword123"),
+        full_name="John Doe",
+        tenant_id=tenant_id,
+        role=UserRole.ADMIN,
+        is_active=True
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
 
     # 3. Log in to get token
     login_data = {
@@ -127,3 +134,44 @@ def test_upload_unauthorized(client: TestClient):
     bad_headers = {"Authorization": "Bearer badtoken"}
     response = client.post("/documents/upload", headers=bad_headers, files=files)
     assert response.status_code == 401
+
+
+def test_upload_pdf_forbidden_for_employee(client: TestClient, db_session: Session):
+    # 1. Create a dummy tenant
+    tenant_id = uuid.uuid4()
+    tenant = Tenant(id=tenant_id, name="Test Tenant", slug="test-tenant")
+    db_session.add(tenant)
+    db_session.commit()
+
+    from app.models.user import User, UserRole
+    from app.core.security import get_password_hash
+    
+    # 2. Directly create an EMPLOYEE user
+    user = User(
+        email="emp@example.com",
+        hashed_password=get_password_hash("strongpassword123"),
+        full_name="Jane Employee",
+        tenant_id=tenant_id,
+        role=UserRole.EMPLOYEE,
+        is_active=True
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    # 3. Log in to get token
+    login_data = {
+        "username": "emp@example.com",
+        "password": "strongpassword123"
+    }
+    login_response = client.post("/auth/login", data=login_data)
+    token = login_response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 4. Attempt upload
+    pdf_content = b"%PDF-1.4 dummy"
+    files = {
+        "file": ("test.pdf", io.BytesIO(pdf_content), "application/pdf")
+    }
+    response = client.post("/documents/upload", headers=headers, files=files)
+    assert response.status_code == 403

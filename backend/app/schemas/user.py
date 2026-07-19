@@ -1,19 +1,17 @@
 import uuid
+from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-class UserRegister(BaseModel):
+class UserCreate(BaseModel):
+    full_name: str = Field(..., min_length=1)
     email: EmailStr
     password: str = Field(..., min_length=8, description="User password (min 8 characters)")
+
+class CompanyAdminCreate(BaseModel):
     full_name: str = Field(..., min_length=1)
-    tenant_id: uuid.UUID
-
-class UserLogin(BaseModel):
     email: EmailStr
-    password: str
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+    password: str = Field(..., min_length=8, description="Admin password (min 8 characters)")
+    tenant_id: uuid.UUID
 
 class UserOut(BaseModel):
     id: uuid.UUID
@@ -22,6 +20,7 @@ class UserOut(BaseModel):
     role: str
     tenant_id: uuid.UUID
     is_active: bool
+    created_by: Optional[uuid.UUID] = None
 
     @field_validator("role", mode="before")
     @classmethod

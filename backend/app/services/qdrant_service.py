@@ -96,8 +96,10 @@ class QdrantService:
             payload = {
                 "tenant_id": str(chunk.tenant_id),
                 "document_id": str(chunk.document_id),
+                "chunk_id": int(chunk.chunk_number),
                 "page": int(chunk.page),
                 "chunk_number": int(chunk.chunk_number),
+                "uploaded_by": str(chunk.uploaded_by) if chunk.uploaded_by else None,
                 "text": str(chunk.text),
                 "original_filename": str(original_filename)
             }

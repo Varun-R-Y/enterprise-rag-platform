@@ -5,6 +5,7 @@ import authService from '../../services/authService';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Button from '../../components/ui/Button';
+import Navbar from '../../components/ui/Navbar';
 
 const registerSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
@@ -62,9 +63,11 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="max-w-md w-full bg-white p-8 border border-slate-200 rounded-lg shadow-sm">
-        <h2 className="text-2xl font-bold text-slate-800 text-center mb-6">Create Account</h2>
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full bg-white p-8 border border-slate-200 rounded-lg shadow-sm">
+          <h2 className="text-2xl font-bold text-slate-800 text-center mb-6">Create Account</h2>
         
         {apiError && (
           <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded">
@@ -158,5 +161,6 @@ export default function Register() {
         </p>
       </div>
     </div>
+  </div>
   );
 }

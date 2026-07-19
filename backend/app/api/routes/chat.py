@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.api.deps import get_current_user
+from app.api.deps import require_active_tenant_user
 from app.models.user import User
 from app.schemas.chat_request import ChatRequest
 from app.schemas.chat import ChatResponse
@@ -36,7 +36,7 @@ async def chat_endpoint(
     request: ChatRequest,
     db: Session = Depends(get_db),
     chat_service: ChatService = Depends(get_chat_service),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_active_tenant_user),
 ) -> ChatResponse:
     """
     Protected chat API route orchestrating semantic search retrieval and LLM response.
@@ -45,7 +45,8 @@ async def chat_endpoint(
     logger.info(f"Authenticated user ID: {current_user.id}")
     logger.info(f"Tenant ID: {current_user.tenant_id}")
 
-    # Validate conversation_id if present
+    # Validate conversation_id if present and load history
+    conversation_history = None
     if request.conversation_id:
         conv = conversation_service.get_conversation(
             db=db,
@@ -58,6 +59,13 @@ async def chat_endpoint(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found."
             )
+        # Fetch prior messages and map to plain dicts (decoupled from ORM)
+        prior_messages = conversation_service.get_messages(db, request.conversation_id)
+        if prior_messages:
+            conversation_history = [
+                {"role": msg.role.value, "content": msg.content}
+                for msg in prior_messages
+            ]
 
     try:
         # Validate question empty/whitespace and other validation errors
@@ -71,6 +79,7 @@ async def chat_endpoint(
             question=request.question,
             top_k=request.top_k,
             score_threshold=request.score_threshold,
+            conversation_history=conversation_history,
         )
 
         # Save messages to database if conversation exists

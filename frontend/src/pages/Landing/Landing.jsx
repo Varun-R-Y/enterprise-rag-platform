@@ -25,6 +25,7 @@ import Section from '../../components/ui/Section';
 import SectionHeading from '../../components/ui/SectionHeading';
 import FeatureCard from '../../components/ui/FeatureCard';
 import TechBadge from '../../components/ui/TechBadge';
+import Navbar from '../../components/ui/Navbar';
 
 export default function Landing() {
   const { isAuthenticated } = useAuth();
@@ -34,45 +35,13 @@ export default function Landing() {
     if (isAuthenticated) {
       navigate('/dashboard');
     } else {
-      navigate('/register');
+      navigate('/login');
     }
   };
 
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col font-sans">
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-slate-200 h-16 flex items-center">
-        <Container className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Layers className="text-indigo-600" size={24} />
-            <span className="font-bold text-lg text-slate-900 tracking-wide">Enterprise RAG</span>
-          </div>
-          
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">Features</a>
-            <a href="#pipeline" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">Pipeline</a>
-            <a href="#techstack" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">Tech Stack</a>
-            <a href="#architecture" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">Architecture</a>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <Button onClick={() => navigate('/dashboard')} variant="primary" className="h-10 px-4 text-sm py-1.5">
-                Dashboard
-              </Button>
-            ) : (
-              <>
-                <Button onClick={() => navigate('/login')} variant="secondary" className="h-10 px-4 text-sm py-1.5 border-none shadow-none text-indigo-600 hover:text-indigo-700">
-                  Sign In
-                </Button>
-                <Button onClick={() => navigate('/register')} variant="primary" className="h-10 px-4 text-sm py-1.5">
-                  Get Started
-                </Button>
-              </>
-            )}
-          </div>
-        </Container>
-      </header>
+      <Navbar />
 
       {/* Hero Section */}
       <Section bg="light" className="flex items-center pt-24 pb-16">
@@ -84,9 +53,15 @@ export default function Landing() {
             A production-ready retrieval-augmented generation platform. Upload corporate documents, chunk them semantically, and obtain context-aware LLM answers.
           </p>
           <div className="flex justify-center items-center">
-            <Button onClick={handleCTA} variant="primary" className="w-full sm:w-auto px-12">
-              {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
-            </Button>
+            {isAuthenticated ? (
+              <Button onClick={handleCTA} variant="primary" className="w-full sm:w-auto px-12">
+                Go to Dashboard
+              </Button>
+            ) : (
+              <div className="text-slate-500 font-semibold bg-slate-100/80 py-3.5 px-8 rounded-xl border border-slate-200 shadow-sm inline-block tracking-tight text-sm">
+                Need an account? Contact your administrator.
+              </div>
+            )}
           </div>
         </Container>
       </Section>
